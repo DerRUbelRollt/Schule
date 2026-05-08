@@ -19,6 +19,12 @@ class GameState:
     LOST = "lost"
 
 
+class LoseReason:
+    """Mögliche Niederlage-Gründe."""
+    HELICOPTER_STOLE_ALL = "helicopter_stole_all"
+    OUT_OF_FUEL = "out_of_fuel"
+
+
 class GameLogic:
     """
     Verwaltet die Spiellogik und Regeln des Transporter-Spiels.
@@ -37,6 +43,7 @@ class GameLogic:
     def __init__(self):
         """Initialisiert die Spiellogik."""
         self.state: str = GameState.RUNNING
+        self.lose_reason: str | None = None
         self.win_threshold: float = WIN_THRESHOLD
         self.ore_total: int = ORE_TOTAL
 
@@ -56,7 +63,7 @@ class GameLogic:
         return delivered_ratio >= self.win_threshold
 
     def check_lose_condition(self, helicopter: Helicopter, truck: Truck,
-                             source: Source, destination: Destination) -> bool:
+                             source: Source, destination: Destination) -> str | None:
         """
         Prüft ob die Verlustbedingung erfüllt ist.
 
@@ -71,21 +78,21 @@ class GameLogic:
             destination: Das Ziel.
 
         Returns:
-            True wenn verloren.
+            Den Niederlage-Grund oder None.
         """
         # Bedingung 1: Hubschrauber hat zu viel gestohlen
         max_steal = self.ore_total * (1 - self.win_threshold)
         if helicopter.stolen_total > max_steal:
-            return True
+            return LoseReason.HELICOPTER_STOLE_ALL
 
-        # Bedingung 2: Kein Sprit und nicht genug geliefert
-        if not truck.has_fuel() and not self.check_win_condition(destination):
+        # Bedingung 2: Nicht mehr fahrfähig und nicht genug geliefert
+        if not truck.can_move() and not self.check_win_condition(destination):
             # Prüfen ob noch genug Erz theoretisch transportierbar wäre
             remaining_needed = (self.ore_total * self.win_threshold) - destination.ore_delivered
             if remaining_needed > 0:
-                return True
+                return LoseReason.OUT_OF_FUEL
 
-        return False
+        return None
 
     def try_load_at_source(self, truck: Truck, source: Source) -> bool:
         """
@@ -188,6 +195,8 @@ class GameLogic:
         if self.state != GameState.RUNNING:
             return self.state
 
+        self.lose_reason = None
+
         # Hubschrauber-Diebstahl verarbeiten
         self.process_helicopter_steal(helicopter, truck)
 
@@ -199,8 +208,11 @@ class GameLogic:
         # Gewinn-/Verlustbedingungen prüfen
         if self.check_win_condition(destination):
             self.state = GameState.WON
-        elif self.check_lose_condition(helicopter, truck, source, destination):
-            self.state = GameState.LOST
+        else:
+            lose_reason = self.check_lose_condition(helicopter, truck, source, destination)
+            if lose_reason is not None:
+                self.lose_reason = lose_reason
+                self.state = GameState.LOST
 
         return self.state
 

@@ -4,6 +4,7 @@ Zeigt Spielinformationen wie Fortschritt, Sprit und Status an.
 """
 
 import pygame
+from game_logic import LoseReason
 from config import (
     WHITE, BLACK, BLUE, GREEN, RED, YELLOW, ORANGE,
     DARK_GRAY, WIN_THRESHOLD, ORE_TOTAL
@@ -116,13 +117,15 @@ class HUD:
         text_rect = text_surface.get_rect(center=(x + width // 2, y + height // 2))
         screen.blit(text_surface, text_rect)
 
-    def draw_game_over(self, screen: pygame.Surface, won: bool) -> None:
+    def draw_game_over(self, screen: pygame.Surface, won: bool,
+                       lose_reason: str | None = None) -> None:
         """
         Zeichnet den Game-Over-Bildschirm (Gewinn oder Verlust).
 
         Args:
             screen: Pygame Surface.
             won: True wenn gewonnen, False wenn verloren.
+            lose_reason: Spezifischer Niederlage-Grund.
         """
         # Halbtransparenter Overlay
         overlay = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
@@ -137,7 +140,12 @@ class HUD:
         else:
             text = "VERLOREN!"
             color = RED
-            sub_text = "Der Hubschrauber hat zu viel gestohlen oder kein Sprit mehr!"
+            if lose_reason == LoseReason.HELICOPTER_STOLE_ALL:
+                sub_text = "Der Hubschrauber hat alles geklaut!"
+            elif lose_reason == LoseReason.OUT_OF_FUEL:
+                sub_text = "Der Sprit ist leer!"
+            else:
+                sub_text = "Du hast verloren!"
 
         result_surface = self.font_large.render(text, True, color)
         result_rect = result_surface.get_rect(

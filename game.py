@@ -253,7 +253,11 @@ class Game:
         if self.game_logic.state == GameState.WON:
             self.hud.draw_game_over(self.screen, won=True)
         elif self.game_logic.state == GameState.LOST:
-            self.hud.draw_game_over(self.screen, won=False)
+            self.hud.draw_game_over(
+                self.screen,
+                won=False,
+                lose_reason=self.game_logic.lose_reason
+            )
 
     def _draw_roads(self) -> None:
         """Zeichnet Verbindungswege zwischen den Stationen."""

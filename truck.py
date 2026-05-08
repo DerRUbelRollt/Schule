@@ -111,6 +111,10 @@ class Truck:
         """Prüft ob der LKW noch Sprit hat."""
         return self.fuel > 0
 
+    def can_move(self) -> bool:
+        """Prüft ob der LKW noch genug Sprit für einen weiteren Schritt hat."""
+        return self.fuel >= self.speed * self.fuel_consumption
+
     def get_rect(self) -> pygame.Rect:
         """Gibt das Kollisions-Rechteck des LKW zurück."""
         return pygame.Rect(
