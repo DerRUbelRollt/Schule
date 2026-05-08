@@ -46,7 +46,8 @@ class Game:
         self.screen_height: int = min(info.current_h - 100, 700)
 
         self.screen: pygame.Surface = pygame.display.set_mode(
-            (self.screen_width, self.screen_height)
+            (self.screen_width, self.screen_height),
+            pygame.RESIZABLE
         )
         pygame.display.set_caption(WINDOW_TITLE)
 
@@ -152,7 +153,10 @@ class Game:
     def _handle_menu_events(self) -> None:
         """Verarbeitet Events im Menü."""
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.VIDEORESIZE:
+                self.screen_width, self.screen_height = event.size
+                self.menu = Menu(self.screen_width, self.screen_height)
+            elif event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 action = self.menu.handle_click(event.pos)
@@ -173,7 +177,11 @@ class Game:
     def _handle_game_events(self) -> None:
         """Verarbeitet Events während des Spiels."""
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.VIDEORESIZE:
+                self.screen_width, self.screen_height = event.size
+                self.hud = HUD(self.screen_width, self.screen_height)
+                self.helicopter.set_screen_size(self.screen_width, self.screen_height)
+            elif event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 if self.game_logic.state in (GameState.WON, GameState.LOST):
